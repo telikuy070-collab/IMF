@@ -1,0 +1,7 @@
+{
+  "chat.mcp.serverSampling": {
+    "IMF/.vscode/mcp.json: supabase": {
+      "allowedModels": ["copilot/auto"]
+    }
+  }
+}

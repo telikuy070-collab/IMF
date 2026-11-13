@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f6f6f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="IMF — расписание мед. колледжа" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="IMF" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://bnzcfhtmzvxxiwfkdryn.supabase.co wss://bnzcfhtmzvxxiwfkdryn.supabase.co;"
+    />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Permissions-Policy"
+      content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    />
+    <title>IMF — Расписание</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body>
+    <a href="#feed" class="skip-link">Перейти к расписанию</a>
+    <div id="app">
+      <header class="appbar">
+        <button type="button" class="wordmark" id="wordmark" aria-label="IMF — расписание">
+          IMF
+        </button>
+        <div class="appbar-actions">
+          <span id="netDot" class="net-dot" hidden></span>
+          <button type="button" class="group-chip" id="groupChip" aria-label="Выбрать группу">
+            <span class="group-chip-label" id="groupChipLabel">Группа</span>
+            <svg class="chip-caret" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="m6 9 6 6 6-6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button type="button" class="icon-btn" id="searchBtn" aria-label="Найти пару">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle
+                cx="11"
+                cy="11"
+                r="7"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+              <path
+                d="m20 20-3.5-3.5"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+          <button type="button" class="icon-btn" id="settingsBtn" aria-label="Настройки">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 7h9M17.5 7H20M4 17h3M11.5 17H20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="15" cy="7" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8" />
+              <circle cx="9" cy="17" r="2.3" fill="none" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+            <span id="changesDot" class="badge-dot" hidden></span>
+          </button>
+          <button type="button" class="icon-btn" id="themeToggle" aria-label="Переключить тему">
+            <svg id="themeIcon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle
+                cx="12"
+                cy="12"
+                r="4"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div id="statusBanner" class="status-host"></div>
+
+      <main id="feed" class="feed">
+        <error-boundary message="Расписание недоступно">
+          <div id="dayStrip" class="day-strip" role="tablist" aria-label="День недели"></div>
+          <div id="feedBody" class="feed-body"></div>
+        </error-boundary>
+      </main>
+
+      <div id="sheetRoot"></div>
+
+      <div
+        id="searchOverlay"
+        class="search-overlay"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-label="Поиск по расписанию"
+      >
+        <div class="search-bar">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle
+              cx="11"
+              cy="11"
+              r="7"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+            <path
+              d="m20 20-3.5-3.5"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
+          <label class="sr-only" for="searchInput">Поиск по расписанию</label>
+          <input
+            id="searchInput"
+            type="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="Предмет, преподаватель, аудитория…"
+          />
+          <button type="button" class="icon-btn" id="searchClose" aria-label="Закрыть поиск">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M6 6l12 12M18 6 6 18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+        <div id="searchResults" class="search-results" aria-live="polite"></div>
+      </div>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <script type="module" src="src/view/errorBoundary.js"></script>
+    <script type="module" src="src/main.ts"></script>
+  </body>
+</html>

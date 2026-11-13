@@ -1,0 +1,62 @@
+{
+  "name": "IMF — Расписание мед. колледжа",
+  "short_name": "IMF",
+  "description": "Расписание мед. колледжа из Excel-файла. Работает офлайн как PWA.",
+  "start_url": "./index.html?day=today&source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f6f8",
+  "theme_color": "#f6f6f8",
+  "lang": "ru",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Расписание на сегодня",
+      "short_name": "Сегодня",
+      "description": "Открыть расписание на сегодняшний день",
+      "url": "./index.html?day=today&source=pwa-shortcut",
+      "icons": [
+        { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "./share-handler.html",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": [
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/csv",
+            ".xls",
+            ".xlsx",
+            ".csv"
+          ]
+        }
+      ]
+    }
+  }
+}

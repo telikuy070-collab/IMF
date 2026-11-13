@@ -1,0 +1,71 @@
+{
+  "name": "IMF-schedule",
+  "version": "1.7.0",
+  "description": "PWA-приложение для отображения расписания мед. колледжа из Excel",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "dev:teacher": "vite --config vite.teacher.config.js",
+    "build": "tsc --noEmit && vite build",
+    "build:teacher": "tsc --noEmit -p tsconfig.teacher.json && vite build --config vite.teacher.config.js",
+    "preview": "vite preview",
+    "preview:teacher": "vite preview --config vite.teacher.config.js",
+    "test": "vitest run",
+    "test:parser": "vitest run tests/parser --config vitest.config.ts",
+    "test:parser:invariants": "vitest run tests/parser/no-loss.test.js",
+    "report:parser": "vite-node --config vitest.config.ts scripts/parser-report.ts",
+    "test:parser:coverage": "vitest run --coverage --config vitest.config.ts",
+    "test:parser:fixtures": "vite-node --config vitest.config.ts scripts/parser-quality.ts --gate",
+    "test:parser:fixtures:report": "vite-node --config vitest.config.ts scripts/parser-quality.ts --report-only",
+    "test:teacher": "vitest run teacher-app/tests",
+    "test:watch": "vitest",
+    "test:edge": "node tests/edge-cases.js",
+    "test:security": "node tests/security-audit.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "verify:data": "node scripts/verify-data.mjs",
+    "verify:oracle": "vite-node --config vitest.config.ts scripts/oracle-supabase.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:teacher": "tsc --noEmit -p tsconfig.teacher.json",
+    "lint": "eslint . --fix && prettier --write .",
+    "analyze": "vite build --mode production && npx vite-bundle-analyzer dist",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "lint-staged": {
+    "*.{ts,js,mjs,cjs}": [
+      "prettier --write"
+    ],
+    "*.{json,yml,css,html,md}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^22.20.4",
+    "@vitest/coverage-v8": "2.1.9",
+    "dotenv": "^17.4.2",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "husky": "^9.1.7",
+    "jsdom": "25.0.1",
+    "lint-staged": "^16.4.0",
+    "preact": "^11.1.1",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.69.0",
+    "vite": "^8.2.2",
+    "vite-node": "2.1.9",
+    "vitest": "^2.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "dependencies": {
+    "@preact/signals": "^2.11.2",
+    "@supabase/supabase-js": "^2.115.0",
+    "zod": "^4.5.4"
+  }
+}
