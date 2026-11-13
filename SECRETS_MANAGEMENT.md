@@ -8,7 +8,7 @@ Configure these in GitHub Repository Settings в†’ Secrets and variables в�
 
 | Secret Name                 | Description                                                             | Source                                                            |
 | --------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `VITE_SUPABASE_URL`         | Supabase project URL (e.g., `https://bnzcfhtmzvxxiwfkdryn.supabase.co`) | Supabase Dashboard в†’ Settings в†’ API                           |
+| `VITE_SUPABASE_URL`         | Supabase project URL (e.g., `https://dtxmuvsrrywpcchvlacv.supabase.co`) | Supabase Dashboard в†’ Settings в†’ API                           |
 | `VITE_SUPABASE_ANON_KEY`    | Supabase anon/public key (safe for browser)                             | Supabase Dashboard в†’ Settings в†’ API                           |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-only, for Edge Functions)                      | Supabase Dashboard в†’ Settings в†’ API                           |
 | `SUPABASE_ACCESS_TOKEN`     | Supabase Personal Access Token (for CLI/migrations)                     | Supabase Dashboard в†’ Account в†’ Access Tokens                  |

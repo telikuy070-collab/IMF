@@ -42,6 +42,17 @@ BEGIN
 END;
 $$;
 
+-- This RPC rewrites the whole lessons table. It is only called by the
+-- `publish-schedule` Edge Function (service_role), so remove the default
+-- execute grants (PUBLIC plus Supabase's explicit role grants) and keep it for
+-- service_role only.
+REVOKE ALL ON FUNCTION publish_schedule(jsonb, text, timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION publish_schedule(jsonb, text, timestamptz) TO service_role;
+
+-- Pin search_path: the body references public.lessons/schedule_version and
+-- gen_random_uuid(), and a pinned path removes the mutable-path advisory.
+ALTER FUNCTION publish_schedule(jsonb, text, timestamptz) SET search_path = public, pg_catalog;
+
 -- PostgREST caches the function list; without this the RPC stays invisible
 -- (PGRST202) until the schema cache is reloaded.
 NOTIFY pgrst, 'reload schema';

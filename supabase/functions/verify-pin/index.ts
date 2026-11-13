@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { verify } from 'https://deno.land/x/argon2@0.4.0/mod.ts';
+import { argon2Verify } from 'npm:hash-wasm@4';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': 'https://telikuy070-collab.github.io',
@@ -94,7 +94,7 @@ serve(async (req) => {
     if (algorithm === 'argon2id' && storedHash.startsWith('$argon2id$')) {
       // Argon2id verification
       try {
-        valid = await verify(storedHash, pin);
+        valid = await argon2Verify({ password: pin, hash: storedHash });
       } catch (err) {
         console.error('[verify-pin] Argon2id verify failed:', err);
         valid = false;

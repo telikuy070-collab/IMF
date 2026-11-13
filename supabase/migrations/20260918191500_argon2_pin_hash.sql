@@ -4,6 +4,14 @@
 -- Add column for hash algorithm
 ALTER TABLE admin_config ADD COLUMN IF NOT EXISTS pin_hash_algorithm text DEFAULT 'argon2id';
 
+-- Keep the label honest for hashes that are still SHA-256 (the seeded default).
+-- verify-pin accepts both during the migration window, but the column should
+-- describe what is actually stored.
+UPDATE admin_config
+SET pin_hash_algorithm = 'sha256'
+WHERE pin_hash !~ '^\$argon2id\$'
+  AND pin_hash_algorithm IS DISTINCT FROM 'sha256';
+
 -- Note: The existing PIN hash uses SHA-256 with salt 'IMF-salt-2026'
 -- To migrate to Argon2id, the admin must set a new PIN via the admin panel
 -- or run the following SQL with a new Argon2id hash:

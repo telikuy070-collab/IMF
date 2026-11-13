@@ -69,3 +69,7 @@ create policy "app_visits anon insert"
 drop policy if exists "app_visits anon update" on public.app_visits;
 create policy "app_visits anon update"
   on public.app_visits for update to anon using (true) with check (true);
+
+-- Роли: аноним читает счётчики и upsert-ит свою строку; service_role — всё.
+grant select, insert, update on public.app_visits to anon;
+grant all on public.app_visits to service_role;

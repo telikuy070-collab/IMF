@@ -2,7 +2,7 @@
   "servers": {
     "supabase": {
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=bnzcfhtmzvxxiwfkdryn&features=docs,account,database,debugging,development,functions,branching,storage"
+      "url": "https://mcp.supabase.com/mcp?project_ref=dtxmuvsrrywpcchvlacv&features=docs,account,database,debugging,development,functions,branching,storage"
     }
   },
   "inputs": []

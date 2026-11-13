@@ -21,8 +21,11 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
-      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      # Public browser credentials for the Ordocom Supabase project. The anon
+      # key is safe to expose (protected by RLS); repository variables override
+      # the defaults if the project ever moves.
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://dtxmuvsrrywpcchvlacv.supabase.co' }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0eG11dnNycnl3cGNjaHZsYWN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2MzMwMTUsImV4cCI6MjEwNTIwOTAxNX0.IkfZUNzrCfWsUVS4ypXEZZ6nXWTKX380zdSyjPtxzxc' }}
     steps:
       - uses: actions/checkout@v4
 

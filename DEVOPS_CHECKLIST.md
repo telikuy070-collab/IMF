@@ -41,7 +41,7 @@ This checklist covers all DevOps improvements needed to make IMF production-read
 # Supabase Dashboard в†’ Account в†’ Access Tokens в†’ "Revoke" в†’ "Generate new token"
 
 # 4. Update GitHub Secrets with new values
-gh secret set VITE_SUPABASE_URL --body "https://bnzcfhtmzvxxiwfkdryn.supabase.co" --repo telikuy070-collab/IMF
+gh secret set VITE_SUPABASE_URL --body "https://dtxmuvsrrywpcchvlacv.supabase.co" --repo telikuy070-collab/IMF
 gh secret set VITE_SUPABASE_ANON_KEY --body "<new-anon-key>" --repo telikuy070-collab/IMF
 gh secret set SUPABASE_SERVICE_ROLE_KEY --body "<new-service-role-key>" --repo telikuy070-collab/IMF
 gh secret set SUPABASE_ACCESS_TOKEN --body "<new-access-token>" --repo telikuy070-collab/IMF

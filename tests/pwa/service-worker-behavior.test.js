@@ -202,7 +202,7 @@ describe('service worker fetch routing', () => {
     const worker = createWorker();
     worker.online(network([]));
     const result = await worker.dispatch('fetch', {
-      request: new Request('https://bnzcfhtmzvxxiwfkdryn.supabase.co/rest/v1/lessons'),
+      request: new Request('https://dtxmuvsrrywpcchvlacv.supabase.co/rest/v1/lessons'),
     });
     expect(result).toBeNull();
   });
@@ -304,7 +304,7 @@ describe('service worker fetch routing', () => {
 
     const result = await worker.dispatch('fetch', {
       request: new Request(
-        'https://bnzcfhtmzvxxiwfkdryn.supabase.co/functions/v1/publish-schedule',
+        'https://dtxmuvsrrywpcchvlacv.supabase.co/functions/v1/publish-schedule',
         { method: 'POST', body: '{}' }
       ),
     });
