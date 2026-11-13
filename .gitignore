@@ -18,6 +18,7 @@ yarn-error.log*
 *.xls
 *.xlsx
 !data/schedule.xls
+!data/6 СЖ_МК_26-27_1пг_7_нед_по новому сем ММФ КУМУ (1).xls
 
 # Data files: admin.json is runtime state, version.json is the canonical
 # snapshot metadata and IS tracked.
