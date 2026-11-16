@@ -22,15 +22,29 @@ export class SupabaseAuthProvider implements IAuthProvider {
     this.verifying = true;
 
     try {
-      const { data, error } = await this.client.functions.invoke('verify-pin', {
-        body: { pin },
+      // Plain fetch instead of supabase.functions.invoke: supabase-js adds an
+      // `x-client-info` header that the Edge Functions CORS preflight rejects,
+      // so the browser blocks the call and the PIN always looks wrong.
+      const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+      if (!url || !key) return false;
+
+      const res = await fetch(`${url}/functions/v1/verify-pin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify({ pin }),
       });
 
-      if (error) {
-        console.error('[auth] verify-pin failed:', error);
+      if (!res.ok) {
+        console.error('[auth] verify-pin HTTP', res.status);
         return false;
       }
 
+      const data = (await res.json()) as { valid?: boolean };
       const valid = data?.valid === true;
       if (valid) this.adminVerified = true;
       return valid;

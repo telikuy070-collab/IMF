@@ -2214,3 +2214,29 @@ html.theme-dark .skeleton {
     height: 170px;
   }
 }
+
+/* ---------- Instagram-style day switching ---------- */
+@keyframes daySwitch {
+  from { opacity: 0.35; transform: translateX(10px); }
+  to   { opacity: 1;    transform: translateX(0); }
+}
+
+.feed-body.is-day-switch {
+  animation: daySwitch 0.22s ease-out;
+}
+
+@media (max-width: 600px) {
+  /* Fit all 7 days without horizontal scroll so a swipe changes the day
+     instead of scrolling the strip to the end. */
+  .day-strip {
+    overflow-x: hidden;
+    justify-content: space-between;
+    gap: 2px;
+  }
+  .day-cell {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 2px 5px;
+  }
+  .day-cell-name { font-size: 11px; }
+}

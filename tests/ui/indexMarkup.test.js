@@ -28,7 +28,6 @@ export const REQUIRED_IDS = {
     'themeToggle',
     'themeIcon',
     'installBtn',
-    'installIcon',
     'shareBtn',
   ],
   qr: [

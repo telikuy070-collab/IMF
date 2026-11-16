@@ -41,38 +41,52 @@ export function createTodayView({
   let ptrArmed = false;
 
   let state = null;
-  let swipeStartX = 0;
-  let swipeStartTime = 0;
   let hintShown = false;
+  let lastDay = '';
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  let swiping = false;
+  let swipeReady = false;
 
-  const swipeThreshold = 70; // px
-
+  // Instagram Stories style: swipe anywhere → exactly one day, with animation.
   function setupSwipe() {
-    // Swipe anywhere on the screen (Instagram Stories style)
-    feed.addEventListener('touchstart', (e) => {
-      swipeStartX = e.changedTouches[0].clientX;
-      swipeStartTime = Date.now();
+    if (swipeReady) return;
+    swipeReady = true;
+    document.addEventListener('touchstart', (e) => {
+      if (!state) return;
+      const t = e.changedTouches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      touchStartTime = Date.now();
+      swiping = false;
     }, { passive: true });
 
-    feed.addEventListener('touchend', (e) => {
+    document.addEventListener('touchmove', (e) => {
+      if (!state || swiping) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+      // Horizontal intent → block native horizontal scroll of the day strip.
+      if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        swiping = true;
+        if (e.cancelable) e.preventDefault();
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
       if (!state) return;
-      const swipeEndX = e.changedTouches[0].clientX;
-      const deltaX = swipeEndX - swipeStartX;
-      const deltaT = Date.now() - swipeStartTime;
-      const fastThreshold = 40; // px for fast swipe
-      const slowThreshold = swipeThreshold; // px for slow swipe
-
-      const isFastSwipe = Math.abs(deltaX) > fastThreshold && deltaT < 300;
-      const isSlowSwipe = Math.abs(deltaX) > slowThreshold && deltaT >= 300;
-
-      if (!(isFastSwipe || isSlowSwipe)) return;
-
-      const activeDay = state.days.find(d => d.active);
-      if (!activeDay) return;
-      const activeIdx = state.days.findIndex(d => d.day === activeDay.day);
-      // Swipe left (deltaX < 0) → next day; swipe right → previous day
-      const targetIdx = deltaX < 0 ? activeIdx + 1 : activeIdx - 1;
-
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+      const dt = Date.now() - touchStartTime;
+      swiping = false;
+      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
+      // Fast swipe counts even if touchmove never fired.
+      if (!dt) return;
+      const activeIdx = state.days.findIndex((d) => d.active);
+      if (activeIdx < 0) return;
+      const targetIdx = dx < 0 ? activeIdx + 1 : activeIdx - 1;
       if (targetIdx >= 0 && targetIdx < state.days.length) {
         haptics('tap');
         onSelectDay(state.days[targetIdx].day);
@@ -125,6 +139,15 @@ export function createTodayView({
 
   function render(next) {
     state = next;
+
+    // Subtle slide/fade when the active day changes (swipe or tap).
+    if (next.day !== lastDay) {
+      lastDay = next.day;
+      body.classList.remove('is-day-switch');
+      void body.offsetWidth;
+      body.classList.add('is-day-switch');
+      setTimeout(() => body.classList.remove('is-day-switch'), 260);
+    }
 
     while (strip.firstChild) strip.removeChild(strip.firstChild);
 

@@ -472,6 +472,9 @@ export function createSettingsSheet({
     heading.focus();
   };
 
+  // Wire the header close button (was missing → cross did nothing).
+  closeBtn.addEventListener('click', close);
+
   return {
     open: openFn,
     close,

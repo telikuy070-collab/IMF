@@ -857,27 +857,23 @@ export async function bootstrap(): Promise<void> {
 
     // ---------- Install button (PWA) ----------
     const installBtn = document.getElementById('installBtn');
-    const installIcon = document.getElementById('installIcon');
     const isIos = install.isIos();
     const isStandalone = install.isStandalone();
-    const canPrompt = install.canPrompt();
 
-    // Show install button only if not already installed and (can prompt OR is iOS)
-    if (installBtn && installIcon && !isStandalone && (canPrompt || isIos)) {
+    // Visible whenever the app is not installed; the click adapts to the browser.
+    if (installBtn && !isStandalone) {
       installBtn.hidden = false;
       installBtn.addEventListener('click', async () => {
-        if (isIos) {
-          // iOS: show installation instruction instead of native prompt
-          toast?.show(
-            'Чтобы установить: нажмите «Поделиться» → «На экран «Домой»»',
-            'ok'
-          );
-        } else if (canPrompt) {
+        if (install.canPrompt()) {
           const outcome = await install.prompt();
           if (outcome === 'accepted') {
             toast?.show('Установили', 'ok');
             installBtn.hidden = true;
           }
+        } else if (isIos) {
+          toast?.show('На iPhone: «Поделиться» → «На экран «Домой»»', 'ok');
+        } else {
+          toast?.show('Откройте меню браузера → «Установить приложение»', 'ok');
         }
       });
     } else if (installBtn) {
