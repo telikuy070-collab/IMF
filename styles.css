@@ -338,6 +338,14 @@ button {
   display: block;
 }
 
+/* Fill-based header icons (install, share) follow the button color so they
+   stay visible on both light and dark themes. The theme icon is stroke-based
+   (currentColor) and must be left untouched. */
+#installIcon path,
+#shareIcon path {
+  fill: currentColor;
+}
+
 .badge-dot {
   position: absolute;
   top: 8px;
@@ -2001,11 +2009,13 @@ html.theme-dark .skeleton {
 
 /* ---------- QR share modal ---------- */
 
+/* Base overlay is shown only when JS removes [hidden]; the class itself must
+   NOT force display:none or the modal stays invisible after the click. */
 .qr-modal {
   position: fixed;
   inset: 0;
   z-index: 120;
-  display: none;
+  display: flex;
 }
 
 .qr-modal[hidden] {
