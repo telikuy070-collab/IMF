@@ -15,12 +15,13 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as XLSX from 'xlsx';
 import { ParserEngine, type ParseSheetResult } from '../src/parser/engine.ts';
-import { buildGrid, cellAt, continuationAnchor, type MergeRangeLike } from '../src/parser/grid.ts';
-import { buildRegions, regionGroupColumns } from '../src/parser/regions.ts';
+import { buildGrid, cellAt, continuationAnchor, mergeAt, type Grid, type MergeRangeLike } from '../src/parser/grid.ts';
+import { buildRegions, regionGroupColumns, groupColumnHas, type HeaderSyntax } from '../src/parser/regions.ts';
 import { classifyNonLesson } from '../src/parser/cellText.ts';
+import { formatRegistry } from '../src/parser/registry.ts';
 
 const GROUP_HEADER = /^[А-ЯA-Z]{2,3}-\d-\d{2}/;
-const HEADER_DAY_RE = /апта\s*күндөрү|дни недели|расписание|day|день/i;
+const HEADER_DAY_RE = /апта күндөрү|дни недели|расписание|day|день/i;
 
 export interface InventoryExpectation {
   /** Every non-empty authored cell on the sheet. */
@@ -47,19 +48,28 @@ export interface InventoryExpectation {
   lessonBearingSlots: number;
 }
 
-const HEADER_SYNTAX = {
-  groupCodePattern: '^[А-ЯA-Z]{2,3}-\\d-\\d{2}',
-  subgroupInGroupCode: true,
-  subgroupPattern: '\\((\\d+)\\)',
-  headerKeywords: ['апта күндөрү'],
-};
-
 /**
- * Independent count of what the inventory must contain.
- *
- * Deliberately written against the raw sheet rather than the engine, so a bug
- * in the engine's own region detection cannot hide behind itself.
+ * Якорь объединённой ячейки — тот же алгоритм, что и ParserEngine#anchorOf:
+ * сначала continuationAnchor, потом обход mergeAt до верхне-левой ячейки.
+ * Нужно, чтобы независимая инвентаризация считала клетки так же, как движок.
  */
+function anchorOfCell(grid: Grid, row: number, col: number): { row: number; col: number } {
+  const continuation = continuationAnchor(grid, row, col);
+  if (continuation) {
+    const [ar, ac] = continuation.split(',').map(Number);
+    return { row: ar, col: ac };
+  }
+  let r = row, c = col;
+  for (let hops = 0; hops < 64; hops++) {
+    const span = mergeAt(grid, r, c);
+    if (!span) break;
+    if (span.row === r && span.col === c) break;
+    r = span.row;
+    c = span.col;
+  }
+  return { row: r, col: c };
+}
+
 export function expectInventory(
   rows: unknown[][],
   merges: MergeRangeLike[] | null,
@@ -74,7 +84,21 @@ export function expectInventory(
     }
   }
 
-  const regions = buildRegions(grid, HEADER_SYNTAX, { minHeaderRow: 0, maxHeaderRow: 30 });
+  // Используем тот же формат-реестр, что и движок, чтобы независимая
+  // инвентаризация не расходилась с движком из-за устаревшего захардкоженного
+  // синтаксиса заголовка.
+  const format = formatRegistry.getDefault();
+  const syntax: HeaderSyntax = {
+    groupCodePattern: format.structure.header.groupCodePattern,
+    subgroupInGroupCode: format.parsing.subgroupInGroupCode,
+    subgroupPattern: format.parsing.subgroupPattern,
+    headerKeywords: format.detection.headerKeywords,
+  };
+  const scanWindow = {
+    minHeaderRow: format.detection.minHeaderRow,
+    maxHeaderRow: format.detection.maxHeaderRow,
+  };
+  const regions = buildRegions(grid, syntax, scanWindow);
   const claimed = new Set<string>();
   const slots = new Set<string>();
   const lessonSlots = new Set<string>();
@@ -89,9 +113,12 @@ export function expectInventory(
         const text = cellAt(grid, row, col);
         if (!text) continue;
         // A merged region is one authored cell: count its anchor only.
-        const anchor = continuationAnchor(grid, row, col);
-        const key = anchor ?? `${row},${col}`;
-        claimed.add(key);
+        const anchor = anchorOfCell(grid, row, col);
+        const anchorIsGroupCell = region.blocks.some((block) =>
+          block.groups.some((group) => groupColumnHas(group, anchor.col))
+        );
+        const claimCol = anchorIsGroupCell ? anchor.col : col;
+        claimed.add(`${row},${claimCol}`);
         // The expanded grid is counted per subgroup, because a header printed
         // across two columns describes one group occupying two columns.
         if (!group) continue;

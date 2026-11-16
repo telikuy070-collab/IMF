@@ -4,8 +4,14 @@
  */
 
 import { norm } from '../text.ts';
-import { classifier, LESSON_TYPES, type ClassificationResult } from './classifier.ts';
+import { SmartTypeClassifier, LESSON_TYPES, type ClassificationResult } from './classifier.ts';
 import { TYPE_IDS } from '../constants.ts';
+
+// Каждый экземпляр FieldExtractor владит своим классификатором.
+// `singletonClassifier` используется только базовым `fieldExtractor`, чтобы
+// отдельные вызовы createFieldExtractor({typePatterns}) не загрязняли общий
+// парсер (ранее learn() мутировал глобальный класс и ломал последующие тесты).
+let singletonClassifier = new SmartTypeClassifier();
 
 /**
  * Результат извлечения поля с confidence score
@@ -101,7 +107,10 @@ function calculateOverallConfidence(fields: {
 /**
  * Создает экземпляр FieldExtractor с заданной конфигурацией
  */
-export function createFieldExtractor(config: FieldExtractorConfig = {}) {
+export function createFieldExtractor(
+  config: FieldExtractorConfig = {},
+  classifier: SmartTypeClassifier = new SmartTypeClassifier()
+) {
   const roomPattern = config.roomPattern || DEFAULT_ROOM_PATTERN;
   const teacherPattern = config.teacherPattern || DEFAULT_TEACHER_PATTERN;
   const hasCustomTeacherPattern = !!config.teacherPattern;
@@ -352,7 +361,7 @@ export function createFieldExtractor(config: FieldExtractorConfig = {}) {
     // lookahead/lookbehind по буквам и цифрам, а не `\b`: кириллица с `\b` не
     // работает, а начало строки должно находиться наравне с серединой.
     const re = new RegExp(
-      `(?<![\\p{L}\\p{N}])[\\s]*${escaped.join('\\s+')}(?![\\p{L}\\p{N}])`,
+      `(?<![\\p{L}\\p{N}])[\\s]*${escaped.join('\\s+')}(?!\d)`,
       'giu'
     );
     const replaced = text.replace(re, ' ');
@@ -494,11 +503,11 @@ export function createFieldExtractor(config: FieldExtractorConfig = {}) {
 /**
  * Singleton instance для удобства
  */
-export const fieldExtractor = createFieldExtractor();
+export const fieldExtractor = createFieldExtractor({}, singletonClassifier);
 
 /**
- * Сбрасывает классификатор к базовым паттернам
+ * Сбрасывает классификатор базового `fieldExtractor` к базовым паттернам
  */
 export function resetFieldExtractor(): void {
-  classifier.reset();
+  singletonClassifier.reset();
 }
