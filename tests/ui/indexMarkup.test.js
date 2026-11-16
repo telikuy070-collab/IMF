@@ -27,6 +27,8 @@ export const REQUIRED_IDS = {
     'changesDot',
     'themeToggle',
     'themeIcon',
+    'installBtn',
+    'installIcon',
   ],
   status: ['statusBanner'],
   feed: ['feed', 'dayStrip', 'feedBody'],
