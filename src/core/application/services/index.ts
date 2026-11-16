@@ -136,6 +136,14 @@ export class AuthService {
   async getSession() {
     return this.auth.getSession();
   }
+
+  adminAvailable(): boolean {
+    return Boolean(this.auth.adminAvailable?.());
+  }
+
+  async signOut(): Promise<void> {
+    await this.auth.signOut();
+  }
 }
 
 export class AdminService {

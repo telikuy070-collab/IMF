@@ -92,6 +92,15 @@ export class SupabaseAuthProvider implements IAuthProvider {
     return this.adminVerified;
   }
 
+  adminAvailable(): boolean {
+    return true;
+  }
+
+  async signOut(): Promise<void> {
+    this.adminVerified = false;
+    return undefined;
+  }
+
   async getSession() {
     // Not using Supabase Auth, but return admin status
     return this.adminVerified

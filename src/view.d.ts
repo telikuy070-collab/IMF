@@ -88,7 +88,7 @@ export function createAdminView(
 };
 
 export function initBrandGesture(
-  authService: { isAdmin(): boolean; verifyPin(pin: string): Promise<boolean> },
+  authService: { isAdmin(): boolean; verifyPin(pin: string): Promise<boolean>; adminAvailable(): boolean },
   adminService: { publishFromExcel(file: File): Promise<{ version: string; count: number }> },
   toast: ReturnType<typeof createToast>
 ): void;

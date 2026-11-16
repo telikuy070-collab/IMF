@@ -376,6 +376,24 @@ export async function bootstrap(): Promise<void> {
         settingsSheet.close();
         toast?.show('Забыл выбор группы — выберешь заново', 'ok');
       },
+      onSignOut: async () => {
+        await authService.signOut();
+        actions.setAdmin(false);
+        actions.forgetSelection();
+        await prefsService.save({
+          currentSheetId: '',
+          currentGroup: '',
+          activeSubgroup: '',
+          mySheetId: '',
+          myGroup: '',
+          mySubgroup: '',
+          onboardingSkipped: false,
+        });
+        settingsSheet.close();
+        adminView.close();
+        toast?.show('Вышли. Группа и админ-доступ сброшены', 'ok');
+        renderAll();
+      },
       onRequestNotifications: () => {
         void reminders.request().then((state) => {
           if (state === 'granted') toast?.show('Напоминания включены', 'ok');

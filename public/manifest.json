@@ -1,7 +1,7 @@
 {
-  "name": "IMF — Расписание мед. колледжа",
+  "name": "IMF — Расписание ММФ",
   "short_name": "IMF",
-  "description": "Расписание мед. колледжа из Excel-файла. Работает офлайн как PWA.",
+  "description": "Расписание ММФ из Excel-файла. Работает офлайн как PWA.",
   "start_url": "./index.html?day=today&source=pwa",
   "scope": "./",
   "display": "standalone",

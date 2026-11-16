@@ -1,7 +1,7 @@
 {
   "name": "IMF-schedule",
   "version": "1.7.0",
-  "description": "PWA-приложение для отображения расписания мед. колледжа из Excel",
+  "description": "PWA-приложение для отображения расписания ММФ из Excel",
   "type": "module",
   "private": true,
   "scripts": {

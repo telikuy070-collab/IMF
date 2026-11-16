@@ -79,6 +79,10 @@ export interface IAuthProvider {
   verifyPin(pin: string): Promise<boolean>;
   isAdmin(): boolean;
   getSession(): Promise<{ user: any; accessToken: string } | null>;
+  /** Admin is possible in this mode (true for Supabase, false for local). */
+  adminAvailable(): boolean;
+  /** Clear any admin / session state (logout). */
+  signOut(): Promise<void>;
 }
 
 export interface IStorage {

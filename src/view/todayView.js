@@ -122,8 +122,8 @@ export function createTodayView({
       let action = null;
 
       if (reason === 'no-schedule') {
-        title = 'Расписание ещё не опубликовано';
-        sub = 'Как только преподаватель загрузит новый Excel-файл, занятия появятся здесь сами.';
+        title = 'Расписание не загружено';
+        sub = 'Данных о занятиях нет. Нажмите «Повторить», чтобы загрузить расписание снова.';
         action = { label: 'Повторить', handler: state.onRetry };
       } else if (reason === 'no-group') {
         title = 'Выбери свою группу';

@@ -10,4 +10,10 @@ export class LocalAuthProvider implements IAuthProvider {
   async getSession(): Promise<{ user: any; accessToken: string } | null> {
     return null;
   }
+  adminAvailable(): boolean {
+    return false;
+  }
+  async signOut(): Promise<void> {
+    return undefined;
+  }
 }

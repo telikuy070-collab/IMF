@@ -1,5 +1,5 @@
 export interface BrandGestureDeps {
-  authService: { verifyPin(pin: string): Promise<boolean> | boolean };
+  authService: { verifyPin(pin: string): Promise<boolean> | boolean; adminAvailable(): boolean };
   adminView: { show(): void };
   toast?: { show(msg: string, type?: string): void };
 }
@@ -34,6 +34,10 @@ export function initBrandGesture(deps: BrandGestureDeps): void {
       if (pressing) {
         pressing = false;
         hideHint();
+        if (!deps.authService.adminAvailable?.()) {
+          deps.toast?.show?.('Админка недоступна в локальном режиме — нужен Supabase', 'bad');
+          return;
+        }
         deps.adminView?.show();
         if (navigator.vibrate) navigator.vibrate(30);
       }
@@ -59,6 +63,10 @@ export function initBrandGesture(deps: BrandGestureDeps): void {
     }, 1200);
     if (clickCount >= 10) {
       clickCount = 0;
+      if (!deps.authService.adminAvailable?.()) {
+        deps.toast?.show?.('Админка недоступна в локальном режиме — нужен Supabase', 'bad');
+        return;
+      }
       const pin = prompt('Введите PIN для доступа к админке:');
       if (!pin) return;
       const ok = await deps.authService?.verifyPin(pin);

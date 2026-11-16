@@ -10,6 +10,7 @@ export function createSettingsSheet({
   onBrowse,
   onGoMySchedule,
   onForget,
+  onSignOut,
   onRequestNotifications,
   onSetLead,
   onCancelReminder,
@@ -428,6 +429,23 @@ export function createSettingsSheet({
     danger.append(dangerIcon, dangerBody);
     danger.addEventListener('click', () => onForget?.());
     body.append(danger);
+
+    const signout = document.createElement('button');
+    signout.type = 'button';
+    signout.className = 'set-row is-danger';
+    signout.dataset.action = 'signout';
+    const signoutIcon = document.createElement('span');
+    signoutIcon.className = 'set-row-icon';
+    signoutIcon.innerHTML = '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>';
+    const signoutBody = document.createElement('div');
+    signoutBody.className = 'set-row-body';
+    const signoutLabel = document.createElement('div');
+    signoutLabel.className = 'set-row-label';
+    signoutLabel.textContent = 'Выйти';
+    signoutBody.append(signoutLabel);
+    signout.append(signoutIcon, signoutBody);
+    signout.addEventListener('click', () => onSignOut?.());
+    body.append(signout);
   };
 
   const onBodyClick = (event) => {
@@ -439,6 +457,7 @@ export function createSettingsSheet({
     else if (action === 'enable-notify') onRequestNotifications?.();
     else if (action === 'install') onInstall?.();
     else if (action === 'forget') onForget?.();
+    else if (action === 'signout') onSignOut?.();
     const lead = event.target.closest('[data-lead]');
     if (lead) onSetLead(Number(lead.dataset.lead));
     const cancel = event.target.closest('[data-cancel]');
