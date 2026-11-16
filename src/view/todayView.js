@@ -188,10 +188,10 @@ export function createTodayView({
 
     while (body.firstChild) body.removeChild(body.firstChild);
 
-    if ((state.error || state.emptyReason) && !state.lessons.length) {
+    if (!state.error && state.emptyReason && !state.lessons.length) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      const reason = state.error ? 'load-failed' : state.emptyReason;
+      const reason = state.emptyReason;
       let title = '';
       let sub = '';
       let action = null;
@@ -215,11 +215,11 @@ export function createTodayView({
         } else {
           sub = 'Занятий в эту неделю не запланировано.';
         }
-      } else {
-        title = 'Не удалось загрузить расписание';
-        sub = 'Проверь соединение и попробуй ещё раз.';
-        action = { label: 'Повторить', handler: state.onRetry };
       }
+
+      // Unknown/empty reason (including load errors) → render nothing.
+      // The error banner was intentionally removed from the UI.
+      if (!title) return;
 
       const iconName =
         reason === 'no-group' || reason === 'no-group-lessons'

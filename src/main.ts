@@ -47,7 +47,6 @@ import { escapeHtml } from './text.ts';
 import { DAY_ORDER, DAY_SHORT } from './constants.ts';
 import { getCurrentTime, getNowMinutes, highlightIndex } from './timing.ts';
 import type { PreferencesService as PrefsServiceType } from '@core/application/services';
-import { reportError } from './view/errorBoundary.js';
 import { toAppError } from '@core/domain/errors';
 import { logger } from '@shared/logger';
 import { getBuildDiagnostics } from '@shared/diagnostics';
@@ -55,7 +54,7 @@ import { initTheme, applyTheme, isDark } from './ui/theme/themeStore';
 import type { ScheduleData } from '@core/domain/entities/types';
 import type { Lesson } from '@core/domain/entities/types';
 import { createContainer } from './container.ts';
-import { formatStamp, offlineNoticeText, readableErrorMessage, lessonWord } from './format.ts';
+import { formatStamp, offlineNoticeText, lessonWord } from './format.ts';
 import {
   registerServiceWorker,
   requestServiceWorkerCheck,
@@ -170,18 +169,7 @@ export async function bootstrap(): Promise<void> {
       const appError = toAppError(err);
       logger.error('[App] Schedule load failed', { reason }, appError);
       setNetStatus({ loadFailed: true });
-      // Показываем тревожный баннер только если расписание уже было — иначе
-      // чистое пустое состояние с кнопкой «Повторить» в ленте достаточно.
-      if (schedule.value) {
-        banner.show('error', readableErrorMessage(appError), {
-          onRetry: () => void reloadAuthoritative(reason),
-          retryLabel: 'Повторить',
-        });
-      }
-      if (!schedule.value) {
-        actions.setError('Не удалось загрузить расписание');
-        reportError(appError, 'Не удалось загрузить расписание');
-      }
+      // Error UI intentionally removed: no banner, no error boundary.
     } finally {
       actions.setLoading(false);
     }
@@ -273,8 +261,6 @@ export async function bootstrap(): Promise<void> {
     logger.debug('[App] Build', { ...getBuildDiagnostics() });
   } catch (err) {
     logger.error('[App] Bootstrap failed', { context: 'bootstrap' }, err as Error);
-    actions.setError('Не удалось загрузить расписание');
-    reportError(err, 'Не удалось загрузить расписание');
   } finally {
     actions.setLoading(false);
     if (visits) visits.recordVisit(deviceId);
