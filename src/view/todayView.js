@@ -42,28 +42,40 @@ export function createTodayView({
 
   let state = null;
   let swipeStartX = 0;
-  let swipeEndX = 0;
+  let swipeStartTime = 0;
   let hintShown = false;
 
+  const swipeThreshold = 70; // px
+
   function setupSwipe() {
-    strip.addEventListener('touchstart', (e) => {
+    // Swipe anywhere on the screen (Instagram Stories style)
+    feed.addEventListener('touchstart', (e) => {
       swipeStartX = e.changedTouches[0].clientX;
+      swipeStartTime = Date.now();
     }, { passive: true });
 
-    strip.addEventListener('touchend', (e) => {
-      swipeEndX = e.changedTouches[0].clientX;
+    feed.addEventListener('touchend', (e) => {
+      if (!state) return;
+      const swipeEndX = e.changedTouches[0].clientX;
       const deltaX = swipeEndX - swipeStartX;
-      const threshold = 50;
+      const deltaT = Date.now() - swipeStartTime;
+      const fastThreshold = 40; // px for fast swipe
+      const slowThreshold = swipeThreshold; // px for slow swipe
 
-      if (Math.abs(deltaX) > threshold && state) {
-        const activeDay = state.days.find(d => d.active);
-        if (!activeDay) return;
-        const activeIdx = state.days.findIndex(d => d.day === activeDay.day);
-        const targetIdx = deltaX < 0 ? activeIdx + 1 : activeIdx - 1;
+      const isFastSwipe = Math.abs(deltaX) > fastThreshold && deltaT < 300;
+      const isSlowSwipe = Math.abs(deltaX) > slowThreshold && deltaT >= 300;
 
-        if (targetIdx >= 0 && targetIdx < state.days.length) {
-          onSelectDay(state.days[targetIdx].day);
-        }
+      if (!(isFastSwipe || isSlowSwipe)) return;
+
+      const activeDay = state.days.find(d => d.active);
+      if (!activeDay) return;
+      const activeIdx = state.days.findIndex(d => d.day === activeDay.day);
+      // Swipe left (deltaX < 0) → next day; swipe right → previous day
+      const targetIdx = deltaX < 0 ? activeIdx + 1 : activeIdx - 1;
+
+      if (targetIdx >= 0 && targetIdx < state.days.length) {
+        haptics('tap');
+        onSelectDay(state.days[targetIdx].day);
       }
     }, { passive: true });
   }
