@@ -3,7 +3,7 @@
  * Usage: npx tsx scripts/seed-database.ts
  */
 import { createClient } from '@supabase/supabase-js';
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import * as XLSX from 'xlsx';
 import { parseWorkbook } from '../src/sheet.js';
 
@@ -12,18 +12,26 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
+if (!SUPABASE_URL || (!SERVICE_KEY && !ANON_KEY)) {
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY / VITE_SUPABASE_ANON_KEY in .env');
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = createClient(SUPABASE_URL, SERVICE_KEY || ANON_KEY);
 
 async function seed() {
   console.log('[Seed] Reading Excel file...');
-  const buffer = readFileSync('data/schedule.xls');
+  const xlsFiles = readdirSync('data').filter((f) => f.endsWith('.xls') || f.endsWith('.xlsx'));
+  if (xlsFiles.length === 0) {
+    console.error('[Seed] No .xls/.xlsx file found in data/');
+    process.exit(1);
+  }
+  const fileName = xlsFiles[0];
+  console.log('[Seed] Using file:', fileName);
+  const buffer = readFileSync(`data/${fileName}`);
   const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
   const sheets = parseWorkbook(workbook, XLSX);
 
@@ -95,7 +103,7 @@ async function seed() {
     id: 1,
     version,
     updated_at: new Date().toISOString(),
-    file_name: 'schedule.xls',
+    file_name: fileName,
     file_size: buffer.length,
   });
 

@@ -240,6 +240,10 @@ export async function bootstrap(): Promise<void> {
     if (schedule.value) rememberVersion(schedule.value);
     applyInitialDay();
 
+    // todayView, searchView, onboarding объявлены ниже, после scheduleReminderFor,
+    // чтобы функции jumpToDay/renderAll/closeSearch/scheduleReminderFor были
+    // определены до первого использования.
+
     // Subscribe to realtime updates.
     try {
       const unsubscribe = scheduleService.subscribe((data) => {
@@ -292,63 +296,9 @@ export async function bootstrap(): Promise<void> {
     const reminders = createReminderStore();
     reminders.start();
 
-    const todayView = createTodayView({
-      strip: document.getElementById('dayStrip'),
-      body: document.getElementById('feedBody'),
-      feed: document.getElementById('feed'),
-      onRefresh: () => handlePullRefresh(scheduleService),
-      onRemind: scheduleReminderFor,
-      onChooseGroup: () => {
-        if (schedule.value) onboarding.show(schedule.value);
-        else {
-          toast?.show('Загружаю расписание…', 'ok');
-          void reloadAuthoritative('bootstrap');
-        }
-      },
-      onSelectDay: jumpToDay,
-      onMinute: renderAll,
-    });
-
-    const searchView = createSearchView({
-      overlay: document.getElementById('searchOverlay'),
-      input: document.getElementById('searchInput'),
-      results: document.getElementById('searchResults'),
-      closeBtn: document.getElementById('searchClose'),
-      onJump: (day: string) => {
-        jumpToDay(day);
-        closeSearch();
-      },
-      onClose: closeSearch,
-      onQuery: (q: string) => actions.setFilter('search', q),
-    });
-
-    const onboarding = createOnboardingSheet({
-      onSelect: async (selection: { sheetId: string; group: string }) => {
-        await prefsService.save({
-          currentSheetId: selection.sheetId,
-          currentGroup: selection.group,
-          activeSubgroup: '',
-          mySheetId: selection.sheetId,
-          myGroup: selection.group,
-          mySubgroup: '',
-        });
-        actions.setPreference('currentSheetId', selection.sheetId);
-        actions.setPreference('currentGroup', selection.group);
-        actions.setPreference('activeSubgroup', '');
-        actions.setPreference('mySheetId', selection.sheetId);
-        actions.setPreference('myGroup', selection.group);
-        actions.setPreference('mySubgroup', '');
-        onboarding.hide();
-        applyInitialDay();
-        renderAll();
-      },
-      onSkip: () => {
-        actions.skipOnboarding();
-        void prefsService.save({ onboardingSkipped: true });
-        onboarding.hide();
-        renderAll();
-      },
-    });
+    // todayView, searchView, onboarding объявлены ниже, после scheduleReminderFor,
+    // чтобы функции jumpToDay/renderAll/closeSearch/scheduleReminderFor были
+    // определены до первого использования.
 
     const settingsSheet = createSettingsSheet({
       reminders,
@@ -963,6 +913,70 @@ export async function bootstrap(): Promise<void> {
         };
         toast?.show(messages[result.reason] || 'Напоминание невозможно', 'bad');
       });
+    }
+
+    const todayView = createTodayView({
+      strip: document.getElementById('dayStrip'),
+      body: document.getElementById('feedBody'),
+      feed: document.getElementById('feed'),
+      onRefresh: () => handlePullRefresh(scheduleService),
+      onRemind: scheduleReminderFor,
+      onChooseGroup: () => {
+        if (schedule.value) onboarding.show(schedule.value);
+        else {
+          toast?.show('Загружаю расписание…', 'ok');
+          void reloadAuthoritative('bootstrap');
+        }
+      },
+      onSelectDay: jumpToDay,
+      onMinute: renderAll,
+    });
+
+    const searchView = createSearchView({
+      overlay: document.getElementById('searchOverlay'),
+      input: document.getElementById('searchInput'),
+      results: document.getElementById('searchResults'),
+      closeBtn: document.getElementById('searchClose'),
+      onJump: (day: string) => {
+        jumpToDay(day);
+        closeSearch();
+      },
+      onClose: closeSearch,
+      onQuery: (q: string) => actions.setFilter('search', q),
+    });
+
+    const onboarding = createOnboardingSheet({
+      onSelect: async (selection: { sheetId: string; group: string }) => {
+        await prefsService.save({
+          currentSheetId: selection.sheetId,
+          currentGroup: selection.group,
+          activeSubgroup: '',
+          mySheetId: selection.sheetId,
+          myGroup: selection.group,
+          mySubgroup: '',
+        });
+        actions.setPreference('currentSheetId', selection.sheetId);
+        actions.setPreference('currentGroup', selection.group);
+        actions.setPreference('activeSubgroup', '');
+        actions.setPreference('mySheetId', selection.sheetId);
+        actions.setPreference('myGroup', selection.group);
+        actions.setPreference('mySubgroup', '');
+        onboarding.hide();
+        applyInitialDay();
+        renderAll();
+      },
+      onSkip: () => {
+        actions.skipOnboarding();
+        void prefsService.save({ onboardingSkipped: true });
+        onboarding.hide();
+        renderAll();
+      },
+    });
+
+    // Если данных уже есть, а группа не выбрана — показываем онбординг сразу,
+    // чтобы пользователь не видел пустого экрана.
+    if (schedule.value && !preferences.value.currentGroup) {
+      onboarding.show(schedule.value);
     }
 
     todayView.start();
