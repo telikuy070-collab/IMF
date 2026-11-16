@@ -515,6 +515,7 @@ export async function bootstrap(): Promise<void> {
         } else {
           listSheet.close();
           if (firstChoice) toast?.show('Запомнил: это твоя группа', 'ok');
+          renderAll();
         }
         return;
       }
@@ -676,10 +677,8 @@ export async function bootstrap(): Promise<void> {
       const showSubgroup = !prefs.activeSubgroup;
 
       const week = weekPlan.value;
-      const daysWithLessons = new Set(week.map((p) => p.day));
-      const stripDays = [...new Set([today, ...daysWithLessons])].sort(
-        (a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b)
-      );
+      // Всегда показываем все 7 дней недели, даже если в某个 из них нет пар.
+      const stripDays = [...DAY_ORDER];
 
       const changes = scopedChanges.value;
       const addedKeys = new Set((changes?.added || []).map((item) => snapshotKey(item)));
