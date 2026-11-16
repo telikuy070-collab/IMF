@@ -41,6 +41,43 @@ export function createTodayView({
   let ptrArmed = false;
 
   let state = null;
+  let swipeStartX = 0;
+  let swipeEndX = 0;
+  let hintShown = false;
+
+  function setupSwipe() {
+    strip.addEventListener('touchstart', (e) => {
+      swipeStartX = e.changedTouches[0].clientX;
+    }, { passive: true });
+
+    strip.addEventListener('touchend', (e) => {
+      swipeEndX = e.changedTouches[0].clientX;
+      const deltaX = swipeEndX - swipeStartX;
+      const threshold = 50;
+
+      if (Math.abs(deltaX) > threshold && state) {
+        const activeDay = state.days.find(d => d.active);
+        if (!activeDay) return;
+        const activeIdx = state.days.findIndex(d => d.day === activeDay.day);
+        const targetIdx = deltaX < 0 ? activeIdx + 1 : activeIdx - 1;
+
+        if (targetIdx >= 0 && targetIdx < state.days.length) {
+          onSelectDay(state.days[targetIdx].day);
+        }
+      }
+    }, { passive: true });
+  }
+
+  function ensureHint() {
+    if (hintShown) return;
+    hintShown = true;
+    const hint = document.createElement('div');
+    hint.className = 'day-strip-hint';
+    hint.textContent = 'Проведите пальцем по дням';
+    strip.parentElement?.appendChild(hint);
+    setTimeout(() => { hint.classList.add('is-visible'); }, 100);
+    setTimeout(() => { hint.classList.remove('is-visible'); }, 2500);
+  }
 
   function updateStats() {
     const now = getNowMinutes();
@@ -108,8 +145,11 @@ export function createTodayView({
       });
     });
 
+    setupSwipe();
+    ensureHint();
+
     if (state.activeCell && state.activeCell.scrollIntoView)
-      state.activeCell.scrollIntoView({ inline: 'center', block: 'nearest' });
+      state.activeCell.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
 
     while (body.firstChild) body.removeChild(body.firstChild);
 
