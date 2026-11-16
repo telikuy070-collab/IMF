@@ -884,11 +884,59 @@ export async function bootstrap(): Promise<void> {
       installBtn.hidden = true;
     }
 
+    // ---------- Share / QR code button ----------
+    const shareBtn = document.getElementById('shareBtn');
+    const qrModal = document.getElementById('qrModal');
+    const qrModalCloseBtn = document.getElementById('qrModalCloseBtn');
+    const qrModalClose = document.getElementById('qrModalClose');
+    const qrModalDoneBtn = document.getElementById('qrModalDoneBtn');
+    const qrImage = document.getElementById('qrCodeImage') as HTMLImageElement | null;
+    const qrLinkInput = document.getElementById('qrLinkInput') as HTMLInputElement | null;
+    const qrCopyBtn = document.getElementById('qrCopyBtn');
+    const qrCopyToast = document.getElementById('qrCopyToast');
+    const qrIosHint = document.getElementById('qrIosHint');
+
+    const appUrl = window.location.origin + window.location.pathname;
+    if (qrImage) qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}`;
+    if (qrLinkInput) qrLinkInput.value = appUrl;
+    if (qrIosHint && install.isIos()) qrIosHint.hidden = false;
+
+    function closeQrModal() {
+      if (qrModal) qrModal.hidden = true;
+    }
+
+    if (shareBtn && qrModal) {
+      shareBtn.hidden = false;
+      shareBtn.addEventListener('click', () => {
+        qrModal.hidden = false;
+      });
+    }
+
+    if (qrModalCloseBtn) qrModalCloseBtn.addEventListener('click', closeQrModal);
+    if (qrModalClose) qrModalClose.addEventListener('click', closeQrModal);
+    if (qrModalDoneBtn) qrModalDoneBtn.addEventListener('click', closeQrModal);
+
+    if (qrCopyBtn && qrLinkInput && qrCopyToast) {
+      qrCopyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(qrLinkInput.value);
+          qrCopyToast.classList.add('show');
+          setTimeout(() => qrCopyToast.classList.remove('show'), 1200);
+        } catch {
+          // clipboard write failed silently
+        }
+      });
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       const overlay = document.getElementById('searchOverlay');
       if (overlay && !overlay.hidden) {
         closeSearch();
+        return;
+      }
+      if (qrModal && !qrModal.hidden) {
+        closeQrModal();
         return;
       }
     });
