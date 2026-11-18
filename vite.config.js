@@ -122,7 +122,9 @@ function releaseArtifactPlugin({ isProd }) {
           }
         }
 
-        let swSource = readFileSync(swPath, 'utf-8');
+        // Read the source worker (with the placeholder), not a stale dist copy
+        // that a previous build already rewrote. This keeps the build idempotent.
+        let swSource = readFileSync(resolve(__dirname, 'public/sw.js'), 'utf-8');
         swSource = stampServiceWorker(swSource, BUILD_TIMESTAMP);
         if (isProd) {
           swSource = injectEntryAssets(swSource, entryAssets);

@@ -56,7 +56,7 @@ describe('authoritative refresh', () => {
 
     expect(result.data).toBe(fresh);
     expect(result.cacheUpdated).toBe(true);
-    expect(storage.set).toHaveBeenCalledWith('schedule_cache', fresh);
+    expect(storage.set).toHaveBeenCalledWith('schedule_cache_v2', fresh);
   });
 
   it('reports a failed cache write without throwing and without losing data', async () => {

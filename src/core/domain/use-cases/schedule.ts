@@ -19,7 +19,7 @@ import type { ScheduleChanges, ScheduleDigest } from '@core/domain/scheduleDiff'
  * Reusing the same IStorage port and the same browser store keeps one cache
  * mechanism instead of a second one next to it.
  */
-export const SCHEDULE_DIGEST_KEY = 'schedule_cache_previous';
+export const SCHEDULE_DIGEST_KEY = 'schedule_cache_previous_v2';
 
 /** Load schedule with fallback chain: cache → DB → empty */
 export async function loadScheduleUseCase(
@@ -43,7 +43,7 @@ export async function loadScheduleUseCase(
  * state instead of pretending the cache is authoritative.
  */
 export async function loadCachedScheduleUseCase(storage: IStorage): Promise<ScheduleData | null> {
-  const cached = await storage.get<ScheduleData>('schedule_cache');
+  const cached = await storage.get<ScheduleData>('schedule_cache_v2');
   if (cached && cached.sheets && cached.sheets.size > 0) {
     return cached;
   }
@@ -70,7 +70,7 @@ export async function refreshScheduleUseCase(
   storage: IStorage
 ): Promise<FreshSchedule> {
   const data = await repository.loadFull();
-  const cacheUpdated = await storage.set('schedule_cache', data);
+  const cacheUpdated = await storage.set('schedule_cache_v2', data);
   return { data, cacheUpdated };
 }
 

@@ -239,7 +239,7 @@ export async function bootstrap(): Promise<void> {
         setNetStatus({ loadFailed: false });
         rememberVersion(data);
         applyInitialDay();
-        void storage.set('schedule_cache', data).then((cacheUpdated) => {
+        void storage.set('schedule_cache_v2', data).then((cacheUpdated) => {
           if (cacheUpdated) {
             cacheWarningShown = false;
             banner.hide();
@@ -501,6 +501,7 @@ export async function bootstrap(): Promise<void> {
         } else {
           listSheet.close();
           if (firstChoice) toast?.show('Запомнил: это твоя группа', 'ok');
+          applyInitialDay();
           renderAll();
         }
         return;
@@ -508,6 +509,8 @@ export async function bootstrap(): Promise<void> {
       actions.setPreference('activeSubgroup', id);
       void prefsService.save({ activeSubgroup: id });
       listSheet.close();
+      applyInitialDay();
+      renderAll();
     }
 
     function openBrowse(): void {
