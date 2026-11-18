@@ -188,6 +188,55 @@ export function createTodayView({
 
     while (body.firstChild) body.removeChild(body.firstChild);
 
+    // Полезные пустые состояния (выбор группы, нет пар сегодня).
+    // Баннеры ошибок/загрузки намеренно не показываются — они раздражали и
+    // не были связаны с реальными ошибками.
+    if (!state.error && state.emptyReason && !state.lessons.length) {
+      const reason = state.emptyReason;
+      if (reason === 'no-group' || reason === 'no-group-lessons' || reason === 'no-lessons-today') {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        let title = '';
+        let sub = '';
+        let action = null;
+
+        if (reason === 'no-group') {
+          title = 'Выбери свою группу';
+          sub = 'Один раз — дальше запомним и сразу покажем твои пары.';
+          action = { label: 'Выбрать группу', handler: onChooseGroup };
+        } else if (reason === 'no-group-lessons') {
+          title = 'У этой группы нет пар';
+          sub = 'Проверь выбор группы в настройках или открой другую.';
+          action = { label: 'Выбрать группу', handler: onChooseGroup };
+        } else {
+          title = 'Сегодня пар нет';
+          if (state.nextUp) {
+            sub = `Ближайшая: <b>${escapeHtml(state.nextUp.day)}</b> · ${escapeHtml(state.nextUp.subject)} в <b>${escapeHtml(state.nextUp.time)}</b>`;
+          } else {
+            sub = 'Занятий в эту неделю не запланировано.';
+          }
+        }
+
+        const iconName = reason === 'no-lessons-today' ? 'sun' : 'users';
+        empty.innerHTML = `
+          <div class="empty-icon">${icon(iconName, 44)}</div>
+          <div class="empty-title">${escapeHtml(title)}</div>
+          <div class="empty-sub">${sub}</div>
+        `;
+        body.appendChild(empty);
+        if (action && action.handler) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-primary btn-block';
+          btn.textContent = action.label;
+          btn.addEventListener('click', action.handler);
+          empty.appendChild(btn);
+        }
+        return;
+      }
+      // 'no-schedule' / 'load-failed' / неизвестно → ничего не рендерим.
+    }
+
     if (state.loading && !state.lessons.length) {
       const skeleton = document.createElement('div');
       skeleton.className = 'skeleton';

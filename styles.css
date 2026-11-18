@@ -1794,23 +1794,6 @@ error-boundary {
 
 /* ---------- Accessibility ---------- */
 
-/* Skip link — виден только при фокусе для клавиатурной навигации */
-.skip-link {
-  position: absolute;
-  top: -1000px;
-  left: 0;
-  background: var(--accent);
-  color: var(--accent-ink);
-  padding: 8px 16px;
-  z-index: 10000;
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-}
-
-.skip-link:focus {
-  top: var(--sat-top);
-}
-
 /* Focus-visible для клавиатурной навигации */
 *:focus-visible {
   outline: 2px solid var(--accent);
@@ -1836,55 +1819,6 @@ button:focus-visible,
   height: 8px;
   border-radius: 50%;
   margin-right: 6px;
-}
-
-.tp-lecture {
-  background: var(--lec);
-}
-.tp-practice {
-  background: var(--prac);
-}
-.tp-lab {
-  background: var(--lab);
-}
-.tp-other {
-  background: var(--other);
-}
-.tp-exam {
-  background: var(--exam);
-}
-
-/* Tags */
-.tag {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 999px;
-  margin-left: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.tag.tag-new {
-  background: var(--ok-soft);
-  color: var(--ok);
-}
-
-.tag.tag-next {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-/* Badge dot */
-.badge-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: var(--bad);
-  border-radius: 50%;
-  margin-left: 6px;
 }
 
 /* ---------- Touch targets (minimum 44px) ---------- */
