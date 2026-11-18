@@ -188,7 +188,7 @@ export function createTodayView({
 
     while (body.firstChild) body.removeChild(body.firstChild);
 
-    if (!state.error && state.emptyReason && !state.lessons.length) {
+    if (false && state.emptyReason && !state.lessons.length) {
       const empty = document.createElement('div');
       empty.className = 'empty';
       const reason = state.emptyReason;
