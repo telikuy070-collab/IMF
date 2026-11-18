@@ -85,6 +85,13 @@ function assetPath(path) {
 const INDEX_URL = assetUrl('index.html');
 const SHARE_HANDLER_PATH_ABS = assetPath(SHARE_HANDLER_PATH);
 
+/**
+ * How long a navigation may wait for the network before the cached shell is
+ * served. Offline starts and flaky mobile connections must show the app
+ * immediately instead of a browser error page.
+ */
+const NAVIGATION_TIMEOUT_MS = 3500;
+
 /* -------------------------------------------------------------------------- */
 /* Precache                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -168,16 +175,58 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() =>
-        caches.match(INDEX_URL).then((cached) => cached || Response.error())
-      )
-    );
+    event.respondWith(respondToNavigation(request));
     return;
   }
 
   event.respondWith(staleWhileRevalidate(request));
 });
+
+/**
+ * Serves the page from the network when possible and falls back to the
+ * precached shell otherwise, so an offline (or slow) launch still opens.
+ */
+async function respondToNavigation(request) {
+  const cachedShell = () => caches.match(INDEX_URL).then((hit) => hit || caches.match(BASE_URL));
+
+  // An explicitly offline browser must not wait for a doomed request.
+  if (self.navigator && self.navigator.onLine === false) {
+    const cached = await cachedShell();
+    if (cached) return cached;
+  }
+
+  try {
+    const fresh = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS);
+    // Keep the shell current for the next offline start (never fail the page
+    // over a cache write).
+    if (fresh && fresh.ok) {
+      caches
+        .open(CACHE)
+        .then((cache) => cache.put(INDEX_URL, fresh.clone()))
+        .catch(() => {});
+    }
+    return fresh;
+  } catch {
+    const cached = await cachedShell();
+    return cached || Response.error();
+  }
+}
+
+function fetchWithTimeout(request, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('navigation timeout')), ms);
+    fetch(request).then(
+      (response) => {
+        clearTimeout(timer);
+        resolve(response);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
 
 async function networkFirstWithCache(request) {
   const cache = await caches.open(REMOTE_SCHEDULE_CACHE);

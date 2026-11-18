@@ -101,6 +101,8 @@ function createWorker({ scope = 'https://user.github.io/IMF/' } = {}) {
     JSON,
     Object,
     Date,
+    setTimeout,
+    clearTimeout,
     console: { warn() {}, error() {}, log() {} },
     // Bound late so tests can swap the network behaviour.
     fetch: (...args) => globalThis.__fetch__(...args),

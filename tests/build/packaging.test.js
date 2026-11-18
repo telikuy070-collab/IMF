@@ -134,9 +134,10 @@ describe('web app manifest packaging', () => {
 
   it('declares a 192px and a 512px raster icon as maskable', () => {
     const png = manifest.icons.filter((icon) => icon.type === 'image/png');
-    expect(png.map((icon) => icon.sizes).sort()).toEqual(['192x192', '512x512']);
-    for (const icon of png) {
-      expect(icon.purpose.split(/\s+/)).toContain('maskable');
+    for (const size of ['192x192', '512x512']) {
+      const ofSize = png.filter((icon) => icon.sizes === size);
+      expect(ofSize.length).toBeGreaterThan(0);
+      expect(ofSize.some((icon) => icon.purpose.split(/\s+/).includes('maskable'))).toBe(true);
     }
   });
 

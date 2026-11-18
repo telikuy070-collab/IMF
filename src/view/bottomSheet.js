@@ -17,6 +17,10 @@ export function createSheet({ title = '', onClose = null } = {}) {
   const heading = document.createElement('h2');
   heading.className = 'sheet-title';
   heading.textContent = title;
+  heading.id = `sheet-title-${Math.random().toString(36).slice(2, 8)}`;
+  heading.tabIndex = -1;
+  sheet.setAttribute('aria-labelledby', heading.id);
+
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'icon-btn';
@@ -31,27 +35,7 @@ export function createSheet({ title = '', onClose = null } = {}) {
   sheet.append(handle, header, body);
 
   let open = false;
-
-  const onKey = (event) => {
-    if (event.key === 'Escape') close();
-  };
-  const onBackdrop = () => close();
-
-  backdrop.addEventListener('click', onBackdrop);
-  closeBtn.addEventListener('click', close);
-
-  function openSheet() {
-    if (open) return;
-    open = true;
-    host.append(backdrop, sheet);
-    document.addEventListener('keydown', onKey);
-    document.body.classList.add('sheet-open');
-    requestAnimationFrame(() => {
-      backdrop.classList.add('is-open');
-      sheet.classList.add('is-open');
-    });
-    closeBtn.focus();
-  }
+  let removeTimer = null;
 
   function closeSheet() {
     if (!open) return;
@@ -60,11 +44,39 @@ export function createSheet({ title = '', onClose = null } = {}) {
     sheet.classList.remove('is-open');
     document.removeEventListener('keydown', onKey);
     document.body.classList.remove('sheet-open');
-    window.setTimeout(() => {
+    window.clearTimeout(removeTimer);
+    removeTimer = window.setTimeout(() => {
       backdrop.remove();
       sheet.remove();
     }, 300);
     onClose?.();
+  }
+
+  function onKey(event) {
+    if (event.key === 'Escape') closeSheet();
+  }
+
+  function onBackdrop() {
+    closeSheet();
+  }
+
+  // A bare `close` resolves to `window.close`, which is why the header cross
+  // used to do nothing ("Illegal invocation"). Bind the sheet's own closer.
+  backdrop.addEventListener('click', onBackdrop);
+  closeBtn.addEventListener('click', closeSheet);
+
+  function openSheet() {
+    if (open) return;
+    open = true;
+    window.clearTimeout(removeTimer);
+    host.append(backdrop, sheet);
+    document.addEventListener('keydown', onKey);
+    document.body.classList.add('sheet-open');
+    requestAnimationFrame(() => {
+      backdrop.classList.add('is-open');
+      sheet.classList.add('is-open');
+    });
+    closeBtn.focus();
   }
 
   function setTitle(next) {
@@ -81,6 +93,8 @@ export function createSheet({ title = '', onClose = null } = {}) {
     },
     destroy() {
       closeSheet();
+      backdrop.removeEventListener('click', onBackdrop);
+      closeBtn.removeEventListener('click', closeSheet);
     },
   };
 }

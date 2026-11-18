@@ -4,6 +4,7 @@
  */
 import { h } from 'preact';
 import { render } from 'preact';
+import { effect } from '@preact/signals';
 import { ScheduleService } from '@core/application/services';
 import { AuthService } from '@core/application/services';
 import { AdminService } from '@core/application/services';
@@ -43,7 +44,6 @@ import {
   isSharedLaunch,
   takeSharedWorkbook,
 } from '@presentation/pwa/sharedFile';
-import { escapeHtml } from './text.ts';
 import { DAY_ORDER, DAY_SHORT } from './constants.ts';
 import { getCurrentTime, getNowMinutes, highlightIndex } from './timing.ts';
 import type { PreferencesService as PrefsServiceType } from '@core/application/services';
@@ -116,21 +116,23 @@ export async function bootstrap(): Promise<void> {
 
   /** "Мои пары сегодня" по умолчанию: день переключается на сегодняшний. */
   function applyInitialDay(): void {
-    if (currentFilters.value.day) return;
     if (!preferences.value.currentGroup) return;
     if (!schedule.value?.sheets?.size) return;
 
-    const allLessons = Array.from(schedule.value.sheets.values()).flat();
-    const lessons = allLessons.filter(l => l.group === preferences.value.currentGroup);
-    const daysWithLessons = [...new Set(lessons.map(l => l.day))];
-
+    const lessons = groupLessons.value;
+    const daysWithLessons: string[] = [...new Set<string>(lessons.map((l) => l.day))];
     if (daysWithLessons.length === 0) return;
 
-      if (daysWithLessons.includes(todayName.value as DayName)) {
-        actions.setFilter('day', todayName.value as DayName);
-      } else {
-        actions.setFilter('day', daysWithLessons[0]);
-      }
+    // An explicit choice that actually has lessons is never overridden.
+    const current = currentFilters.value.day;
+    if (current && daysWithLessons.includes(current)) return;
+
+    // Otherwise land on today when it has lessons, else the nearest upcoming
+    // day, else the first day of the student's week.
+    const todayIdx = DAY_ORDER.indexOf(todayName.value);
+    const upcoming = DAY_ORDER.slice(todayIdx).find((d) => daysWithLessons.includes(d));
+
+    actions.setFilter('day', upcoming ?? daysWithLessons[0]);
   }
 
   /**
@@ -370,6 +372,26 @@ export async function bootstrap(): Promise<void> {
       onSelect: browseSelect,
     });
     let browseStep: 'sheet' | 'group' | 'subgroup' = 'sheet';
+    // The selection being assembled. Nothing is persisted until a group is
+    // picked, so opening another department and closing the sheet can never
+    // wipe the group the student already had.
+    let pendingSheetId = '';
+    let pendingGroupId = '';
+
+    function currentBrowseSheet(): string {
+      return pendingSheetId || preferences.value.currentSheetId;
+    }
+
+    function commitSelection(sheetId: string, group: string, subgroup: string): void {
+      actions.setPreference('currentSheetId', sheetId);
+      actions.setPreference('currentGroup', group);
+      actions.setPreference('activeSubgroup', subgroup);
+      void prefsService.save({
+        currentSheetId: sheetId,
+        currentGroup: group,
+        activeSubgroup: subgroup,
+      });
+    }
 
     function renderBrowse(): void {
       const data = schedule.value;
@@ -392,9 +414,9 @@ export async function bootstrap(): Promise<void> {
             const count = data.sheets.get(s.id)?.length || 0;
             return {
               id: s.id,
-              label: escapeHtml(s.name),
+              label: s.name,
               meta: count ? count + ' ' + lessonWord(count) : '',
-              active: s.id === preferences.value.currentSheetId,
+              active: s.id === currentBrowseSheet(),
             };
           }),
           footer: makeBrowseFooter(),
@@ -402,8 +424,9 @@ export async function bootstrap(): Promise<void> {
         return;
       }
 
-      const sheetId = preferences.value.currentSheetId;
+      const sheetId = currentBrowseSheet();
       const lessons = data.sheets.get(sheetId) || [];
+      const sameSheet = sheetId === preferences.value.currentSheetId;
 
       if (browseStep === 'group') {
         const groups = Array.from(
@@ -418,19 +441,21 @@ export async function bootstrap(): Promise<void> {
             .forEach((l) => l.subgroup && g.subgroups.add(l.subgroup));
         });
         groups.sort((a, b) => String(a.code).localeCompare(String(b.code), 'ru'));
+        const activeGroup = pendingGroupId || (sameSheet ? preferences.value.currentGroup : '');
         listSheet.open({
           title: 'Группа',
           hint: 'Выбери группу',
           backLabel: 'Другое отделение',
           onBack: () => {
             browseStep = 'sheet';
+            pendingGroupId = '';
             renderBrowse();
           },
           items: groups.map((g) => ({
             id: g.code,
-            label: escapeHtml(g.code),
+            label: g.code,
             meta: g.count ? g.count + ' ' + lessonWord(g.count) : '',
-            active: g.code === preferences.value.currentGroup,
+            active: g.code === activeGroup,
           })),
           footer: makeBrowseFooter(),
         });
@@ -438,8 +463,12 @@ export async function bootstrap(): Promise<void> {
       }
 
       // subgroup
-      const groupCode = preferences.value.currentGroup;
+      const groupCode = pendingGroupId || preferences.value.currentGroup;
       const groupLessonsList = lessons.filter((l) => l.group === groupCode);
+      const activeSubgroup =
+        sameSheet && groupCode === preferences.value.currentGroup
+          ? preferences.value.activeSubgroup
+          : '';
       const subgroups = Array.from(
         new Set(groupLessonsList.map((l) => l.subgroup).filter(Boolean))
       ).sort((a, b) => {
@@ -457,15 +486,15 @@ export async function bootstrap(): Promise<void> {
           renderBrowse();
         },
         items: [
-          { id: '', label: 'Все подгруппы', meta: '', active: !preferences.value.activeSubgroup },
+          { id: '', label: 'Все подгруппы', meta: '', active: !activeSubgroup },
           ...subgroups.map((sg) => ({
             id: sg,
-            label: escapeHtml(sg),
+            label: sg,
             meta:
               groupLessonsList.filter((l) => l.subgroup === sg).length +
               ' ' +
               lessonWord(groupLessonsList.filter((l) => l.subgroup === sg).length),
-            active: sg === preferences.value.activeSubgroup,
+            active: sg === activeSubgroup,
           })),
         ],
         footer: makeBrowseFooter(),
@@ -473,12 +502,17 @@ export async function bootstrap(): Promise<void> {
     }
 
     function makeBrowseFooter() {
-      if (browseStep !== 'group' || !browsingOtherGroup.value) return null;
+      if (browseStep !== 'group' || !pendingGroupId) return null;
+      const prefs = preferences.value;
+      const mineSheet = prefs.mySheetId || prefs.currentSheetId;
+      const isOwnGroup = prefs.myGroup === pendingGroupId && mineSheet === currentBrowseSheet();
+      if (!prefs.myGroup || isOwnGroup) return null;
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-primary btn-block';
       btn.textContent = 'Сделать моей группой';
       btn.addEventListener('click', () => {
+        commitSelection(currentBrowseSheet(), pendingGroupId, '');
         void prefsService.save(actions.rememberCurrentAsMySchedule());
         listSheet.close();
         toast?.show('Запомнил: это твоя группа', 'ok');
@@ -490,22 +524,21 @@ export async function bootstrap(): Promise<void> {
       const data = schedule.value;
       if (!data) return;
       if (browseStep === 'sheet') {
-        actions.setPreference('currentSheetId', id);
-        actions.setPreference('currentGroup', '');
-        actions.setPreference('activeSubgroup', '');
-        void prefsService.save({ currentSheetId: id, currentGroup: '', activeSubgroup: '' });
+        pendingSheetId = id;
+        pendingGroupId = '';
         browseStep = 'group';
         renderBrowse();
         return;
       }
       if (browseStep === 'group') {
+        const sheetId = currentBrowseSheet();
         const firstChoice = !preferences.value.myGroup && !preferences.value.mySheetId;
-        actions.setPreference('currentGroup', id);
-        actions.setPreference('activeSubgroup', '');
-        const patch: Record<string, string> = { currentGroup: id, activeSubgroup: '' };
-        if (firstChoice) Object.assign(patch, actions.rememberCurrentAsMySchedule());
-        void prefsService.save(patch);
-        const lessons = data.sheets.get(preferences.value.currentSheetId!) || [];
+        pendingGroupId = id;
+        commitSelection(sheetId, id, '');
+        if (firstChoice) {
+          void prefsService.save(actions.rememberCurrentAsMySchedule());
+        }
+        const lessons = data.sheets.get(sheetId) || [];
         const hasSubgroups = lessons.some((l) => l.group === id && l.subgroup);
         if (hasSubgroups) {
           browseStep = 'subgroup';
@@ -518,8 +551,7 @@ export async function bootstrap(): Promise<void> {
         }
         return;
       }
-      actions.setPreference('activeSubgroup', id);
-      void prefsService.save({ activeSubgroup: id });
+      commitSelection(currentBrowseSheet(), pendingGroupId || preferences.value.currentGroup, id);
       listSheet.close();
       applyInitialDay();
       renderAll();
@@ -527,6 +559,8 @@ export async function bootstrap(): Promise<void> {
 
     function openBrowse(): void {
       browseStep = 'sheet';
+      pendingSheetId = preferences.value.currentSheetId;
+      pendingGroupId = preferences.value.currentGroup;
       renderBrowse();
     }
 
@@ -894,7 +928,8 @@ export async function bootstrap(): Promise<void> {
     const qrIosHint = document.getElementById('qrIosHint');
 
     const appUrl = window.location.origin + window.location.pathname;
-    if (qrImage) qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}`;
+    if (qrImage)
+      qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}`;
     if (qrLinkInput) qrLinkInput.value = appUrl;
     if (qrIosHint && install.isIos()) qrIosHint.hidden = false;
 
@@ -1014,7 +1049,7 @@ export async function bootstrap(): Promise<void> {
         jumpToDay(day);
         closeSearch();
       },
-      onClose: closeSearch,
+      onClose: () => actions.clearSearch(),
       onQuery: (q: string) => actions.setFilter('search', q),
     });
 
@@ -1054,6 +1089,14 @@ export async function bootstrap(): Promise<void> {
 
     todayView.start();
 
+    // Single render loop: everything the screen depends on lives in signals, so
+    // a schedule/preference change repaints immediately. Without it the first
+    // paint used to wait for the next minute tick, which showed a blank feed
+    // (and made the stored group look forgotten) for up to a minute.
+    effect(() => {
+      renderAll();
+    });
+
     return statusBanner;
   }
 
@@ -1067,7 +1110,7 @@ export async function bootstrap(): Promise<void> {
   function applyLaunchFilters(): void {
     const params = new URLSearchParams(window.location.search);
     if (params.get('day') !== 'today') return;
-    actions.setFilter('day', todayName.value as DayName)
+    actions.setFilter('day', todayName.value as DayName);
   }
 
   async function handlePullRefresh(scheduleService: ScheduleService): Promise<void> {

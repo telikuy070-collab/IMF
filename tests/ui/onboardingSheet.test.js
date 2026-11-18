@@ -4,24 +4,24 @@ import { createOnboardingSheet } from '../../src/view/onboardingSheet.js';
 
 const schedule = {
   sheetsMeta: [
-    {
-      id: 'ЛД',
-      name: 'Лечебное дело',
-      order: 0,
-      lessonCount: 5,
-      groups: [
-        { code: 'ЛД-11', lessonCount: 3 },
-        { code: 'ЛД-12', lessonCount: 2 },
-      ],
-    },
-    {
-      id: 'СЖ',
-      name: 'Сестринское дело',
-      order: 1,
-      lessonCount: 4,
-      groups: [{ code: 'СЖ-21', lessonCount: 4 }],
-    },
+    { id: 'ЛД', name: 'Лечебное дело', order: 0, lessonCount: 5 },
+    { id: 'СЖ', name: 'Сестринское дело', order: 1, lessonCount: 4 },
   ],
+  // Groups are derived from the lessons themselves: `sheetsMeta` carries no
+  // group list, which is why the old chooser showed an empty second step.
+  sheets: new Map([
+    [
+      'ЛД',
+      [
+        { group: 'ЛД-12' },
+        { group: 'ЛД-11' },
+        { group: 'ЛД-11' },
+        { group: 'ЛД-12' },
+        { group: 'ЛД-11' },
+      ],
+    ],
+    ['СЖ', [{ group: 'СЖ-21' }, { group: 'СЖ-21' }, { group: 'СЖ-21' }, { group: 'СЖ-21' }]],
+  ]),
 };
 
 function mount() {

@@ -7,12 +7,20 @@ export function registerServiceWorker(): void {
     navigator.serviceWorker
       .register(`${import.meta.env.BASE_URL}sw.js`, {
         scope: import.meta.env.BASE_URL,
+        // Never let the HTTP cache hide a freshly deployed worker.
+        updateViaCache: 'none',
       })
       .then((reg) => {
         if (!reg) return;
         if (import.meta.env.DEV) {
           logger.debug('[SW] Registered', { scope: reg.scope });
         }
+        // A long-lived installed app would otherwise keep an old build until
+        // the browser decides to look for a new worker.
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState !== 'visible') return;
+          void reg.update().catch(() => {});
+        });
       })
       .catch((err) => {
         logger.error('[SW] Registration failed', { context: 'service_worker' }, err as Error);

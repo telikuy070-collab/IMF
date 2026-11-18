@@ -53,45 +53,83 @@ export function createTodayView({
   function setupSwipe() {
     if (swipeReady) return;
     swipeReady = true;
-    document.addEventListener('touchstart', (e) => {
-      if (!state) return;
-      const t = e.changedTouches[0];
-      touchStartX = t.clientX;
-      touchStartY = t.clientY;
-      touchStartTime = Date.now();
-      swiping = false;
-    }, { passive: true });
 
-    document.addEventListener('touchmove', (e) => {
-      if (!state || swiping) return;
-      const t = e.changedTouches[0];
-      const dx = t.clientX - touchStartX;
-      const dy = t.clientY - touchStartY;
-      // Horizontal intent → block native horizontal scroll of the day strip.
-      if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        swiping = true;
-        if (e.cancelable) e.preventDefault();
-      }
-    }, { passive: false });
+    // A sheet, the search dialog or a modal owns the gesture while it is open.
+    const gestureBlocked = (target) => {
+      if (document.body.classList.contains('sheet-open')) return true;
+      return Boolean(
+        target &&
+        target.closest &&
+        target.closest('.sheet, .sheet-backdrop, .search-overlay, .qr-modal, .admin-root')
+      );
+    };
 
-    document.addEventListener('touchend', (e) => {
+    document.addEventListener(
+      'touchstart',
+      (e) => {
+        if (!state) return;
+        if (gestureBlocked(e.target)) return;
+        const t = e.changedTouches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchStartTime = Date.now();
+        swiping = false;
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      'touchmove',
+      (e) => {
+        if (!state || swiping) return;
+        if (gestureBlocked(e.target)) return;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        // Horizontal intent → block native horizontal scroll of the day strip.
+        if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          swiping = true;
+          if (e.cancelable) e.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
+    document.addEventListener(
+      'touchend',
+      (e) => {
+        if (!state) return;
+        if (gestureBlocked(e.target)) return;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        const dt = Date.now() - touchStartTime;
+        swiping = false;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
+        // Fast swipe counts even if touchmove never fired.
+        if (!dt) return;
+        const activeIdx = state.days.findIndex((d) => d.active);
+        if (activeIdx < 0) return;
+        const targetIdx = dx < 0 ? activeIdx + 1 : activeIdx - 1;
+        if (targetIdx >= 0 && targetIdx < state.days.length) {
+          haptics('tap');
+          onSelectDay(state.days[targetIdx].day);
+        }
+      },
+      { passive: true }
+    );
+
+    // Keyboard navigation for the day tabs (desktop and keyboard users).
+    strip.addEventListener('keydown', (e) => {
       if (!state) return;
-      const t = e.changedTouches[0];
-      const dx = t.clientX - touchStartX;
-      const dy = t.clientY - touchStartY;
-      const dt = Date.now() - touchStartTime;
-      swiping = false;
-      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
-      // Fast swipe counts even if touchmove never fired.
-      if (!dt) return;
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       const activeIdx = state.days.findIndex((d) => d.active);
       if (activeIdx < 0) return;
-      const targetIdx = dx < 0 ? activeIdx + 1 : activeIdx - 1;
-      if (targetIdx >= 0 && targetIdx < state.days.length) {
-        haptics('tap');
-        onSelectDay(state.days[targetIdx].day);
-      }
-    }, { passive: true });
+      const targetIdx = e.key === 'ArrowRight' ? activeIdx + 1 : activeIdx - 1;
+      if (targetIdx < 0 || targetIdx >= state.days.length) return;
+      e.preventDefault();
+      onSelectDay(state.days[targetIdx].day);
+    });
   }
 
   function ensureHint() {
@@ -101,8 +139,12 @@ export function createTodayView({
     hint.className = 'day-strip-hint';
     hint.textContent = 'Проведите пальцем по дням';
     strip.parentElement?.appendChild(hint);
-    setTimeout(() => { hint.classList.add('is-visible'); }, 100);
-    setTimeout(() => { hint.classList.remove('is-visible'); }, 2500);
+    setTimeout(() => {
+      hint.classList.add('is-visible');
+    }, 100);
+    setTimeout(() => {
+      hint.classList.remove('is-visible');
+    }, 2500);
   }
 
   function updateStats() {
@@ -141,7 +183,8 @@ export function createTodayView({
     state = next;
 
     // Subtle slide/fade when the active day changes (swipe or tap).
-    if (next.day !== lastDay) {
+    const dayChanged = next.day !== lastDay;
+    if (dayChanged) {
       lastDay = next.day;
       body.classList.remove('is-day-switch');
       void body.offsetWidth;
@@ -149,6 +192,10 @@ export function createTodayView({
       setTimeout(() => body.classList.remove('is-day-switch'), 260);
     }
 
+    // The strip is rebuilt on every render; keep the student's horizontal
+    // position unless they actually changed the day.
+    const stripScroll = strip.scrollLeft;
+    const stripHadFocus = strip.contains(document.activeElement);
     while (strip.firstChild) strip.removeChild(strip.firstChild);
 
     const frag = document.createDocumentFragment();
@@ -183,8 +230,14 @@ export function createTodayView({
     setupSwipe();
     ensureHint();
 
-    if (state.activeCell && state.activeCell.scrollIntoView)
-      state.activeCell.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    strip.scrollLeft = stripScroll;
+    const activeCell = strip.querySelector('.day-cell.is-active');
+    state.activeCell = activeCell;
+    if (activeCell) {
+      if (dayChanged && typeof activeCell.scrollIntoView === 'function')
+        activeCell.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      if (stripHadFocus) activeCell.focus({ preventScroll: true });
+    }
 
     while (body.firstChild) body.removeChild(body.firstChild);
 
@@ -193,7 +246,13 @@ export function createTodayView({
     // не были связаны с реальными ошибками.
     if (!state.error && state.emptyReason && !state.lessons.length) {
       const reason = state.emptyReason;
-      if (reason === 'no-group' || reason === 'no-group-lessons' || reason === 'no-lessons-today') {
+      if (
+        reason === 'no-group' ||
+        reason === 'no-group-lessons' ||
+        reason === 'no-lessons-today' ||
+        reason === 'no-schedule' ||
+        reason === 'load-failed'
+      ) {
         const empty = document.createElement('div');
         empty.className = 'empty';
         let title = '';
@@ -208,16 +267,30 @@ export function createTodayView({
           title = 'У этой группы нет пар';
           sub = 'Проверь выбор группы в настройках или открой другую.';
           action = { label: 'Выбрать группу', handler: onChooseGroup };
-        } else {
+        } else if (reason === 'no-lessons-today') {
           title = 'Сегодня пар нет';
           if (state.nextUp) {
             sub = `Ближайшая: <b>${escapeHtml(state.nextUp.day)}</b> · ${escapeHtml(state.nextUp.subject)} в <b>${escapeHtml(state.nextUp.time)}</b>`;
+            action = {
+              label: `Открыть ${escapeHtml(state.nextUp.short)}`,
+              handler: () => onSelectDay?.(state.nextUp.day),
+            };
           } else {
             sub = 'Занятий в эту неделю не запланировано.';
           }
+        } else {
+          // Расписание ещё не загружено или недоступно (например, первый
+          // запуск без интернета): пустой экран выглядел как поломка.
+          const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+          title = offline ? 'Нет соединения' : 'Расписание не загрузилось';
+          sub = offline
+            ? 'Офлайн-копии ещё нет. Подключись к интернету — и расписание появится.'
+            : 'Проверь соединение и попробуй обновить ещё раз.';
+          action = { label: 'Обновить', handler: state.onRetry };
         }
 
-        const iconName = reason === 'no-lessons-today' ? 'sun' : 'users';
+        const iconName =
+          reason === 'no-lessons-today' ? 'sun' : reason === 'no-group' ? 'users' : 'calendar';
         empty.innerHTML = `
           <div class="empty-icon">${icon(iconName, 44)}</div>
           <div class="empty-title">${escapeHtml(title)}</div>
@@ -234,7 +307,7 @@ export function createTodayView({
         }
         return;
       }
-      // 'no-schedule' / 'load-failed' / неизвестно → ничего не рендерим.
+      // Неизвестная причина → ничего не рендерим.
     }
 
     if (state.loading && !state.lessons.length) {

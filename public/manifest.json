@@ -1,28 +1,31 @@
 {
+  "id": "./",
   "name": "IMF — Расписание ММФ",
   "short_name": "IMF",
   "description": "Расписание ММФ из Excel-файла. Работает офлайн как PWA.",
   "start_url": "./index.html?day=today&source=pwa",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#f6f6f8",
   "theme_color": "#f6f6f8",
   "lang": "ru",
+  "dir": "ltr",
   "categories": ["education", "productivity"],
   "icons": [
     { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [

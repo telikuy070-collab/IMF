@@ -49,9 +49,12 @@ export function createListSheet({ onSelect } = {}) {
     for (const item of items) {
       const btn = document.createElement('button');
       btn.type = 'button';
-      const isActive = item.id === activeId;
+      // Callers mark the selection either per item (`active`) or through one
+      // shared id; both used to be ignored, so the check mark never matched.
+      const isActive = Boolean(item.active) || (activeId !== '' && item.id === activeId);
       btn.className = 'sheet-item' + (isActive ? ' is-active' : '');
       btn.dataset.id = item.id;
+      if (isActive) btn.setAttribute('aria-current', 'true');
 
       const label = document.createElement('span');
       label.className = 'sheet-item-label';

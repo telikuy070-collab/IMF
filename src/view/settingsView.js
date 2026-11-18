@@ -45,10 +45,12 @@ export function createSettingsSheet({
   sheet.append(handle, header, body);
 
   let current = null;
+  let removeTimer = null;
 
   const close = () => {
     sheet.classList.remove('is-open');
-    window.setTimeout(() => sheet.remove(), 300);
+    window.clearTimeout(removeTimer);
+    removeTimer = window.setTimeout(() => sheet.remove(), 300);
   };
 
   const stateOf = (perm) => {
@@ -436,7 +438,8 @@ export function createSettingsSheet({
     signout.dataset.action = 'signout';
     const signoutIcon = document.createElement('span');
     signoutIcon.className = 'set-row-icon';
-    signoutIcon.innerHTML = '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>';
+    signoutIcon.innerHTML =
+      '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>';
     const signoutBody = document.createElement('div');
     signoutBody.className = 'set-row-body';
     const signoutLabel = document.createElement('div');
@@ -467,9 +470,10 @@ export function createSettingsSheet({
 
   const openFn = function () {
     render(current ?? {});
+    window.clearTimeout(removeTimer);
     if (!sheet.parentElement) document.getElementById('sheetRoot').appendChild(sheet);
     sheet.classList.add('is-open');
-    heading.focus();
+    closeBtn.focus();
   };
 
   // Wire the header close button (was missing → cross did nothing).
