@@ -254,9 +254,9 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   background: linear-gradient(135deg, var(--accent), #7c3aed);
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
   flex: 0 0 auto;
