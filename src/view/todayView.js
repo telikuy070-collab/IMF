@@ -188,64 +188,6 @@ export function createTodayView({
 
     while (body.firstChild) body.removeChild(body.firstChild);
 
-    if (false && state.emptyReason && !state.lessons.length) {
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      const reason = state.emptyReason;
-      let title = '';
-      let sub = '';
-      let action = null;
-
-      if (reason === 'no-schedule') {
-        title = 'Расписание не загружено';
-        sub = 'Данных о занятиях нет. Нажмите «Повторить», чтобы загрузить расписание снова.';
-        action = { label: 'Повторить', handler: state.onRetry };
-      } else if (reason === 'no-group') {
-        title = 'Выбери свою группу';
-        sub = 'Один раз — дальше запомним и сразу покажем твои пары.';
-        action = { label: 'Выбрать группу', handler: onChooseGroup };
-      } else if (reason === 'no-group-lessons') {
-        title = 'У этой группы нет пар';
-        sub = 'Проверь выбор группы в настройках или открой другую.';
-        action = { label: 'Выбрать группу', handler: onChooseGroup };
-      } else if (reason === 'no-lessons-today') {
-        title = 'Сегодня пар нет';
-        if (state.nextUp) {
-          sub = `Ближайшая: <b>${escapeHtml(state.nextUp.day)}</b> · ${escapeHtml(state.nextUp.subject)} в <b>${escapeHtml(state.nextUp.time)}</b>`;
-        } else {
-          sub = 'Занятий в эту неделю не запланировано.';
-        }
-      }
-
-      // Unknown/empty reason (including load errors) → render nothing.
-      // The error banner was intentionally removed from the UI.
-      if (!title) return;
-
-      const iconName =
-        reason === 'no-group' || reason === 'no-group-lessons'
-          ? 'users'
-          : reason === 'no-lessons-today'
-            ? 'sun'
-            : reason === 'load-failed'
-              ? 'alert'
-              : 'book';
-      empty.innerHTML = `
-        <div class="empty-icon">${icon(iconName, 44)}</div>
-        <div class="empty-title">${escapeHtml(title)}</div>
-        <div class="empty-sub">${sub}</div>
-      `;
-      body.appendChild(empty);
-      if (action && action.handler) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn btn-primary btn-block';
-        btn.textContent = action.label;
-        btn.addEventListener('click', action.handler);
-        empty.appendChild(btn);
-      }
-      return;
-    }
-
     if (state.loading && !state.lessons.length) {
       const skeleton = document.createElement('div');
       skeleton.className = 'skeleton';

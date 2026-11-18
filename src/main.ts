@@ -126,7 +126,7 @@ export async function bootstrap(): Promise<void> {
 
     if (daysWithLessons.length === 0) return;
 
-      if (daysWithLessons.includes(todayName.value)) {
+      if (daysWithLessons.includes(todayName.value as DayName)) {
         actions.setFilter('day', todayName.value as DayName);
       } else {
         actions.setFilter('day', daysWithLessons[0]);

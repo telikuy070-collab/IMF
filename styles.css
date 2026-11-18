@@ -147,21 +147,24 @@ html.theme-light {
   display: none !important;
 }
 
+/* ---------- Accessibility ---------- */
+
+/* Skip link — виден только при фокусе для клавиатурной навигации */
 .skip-link {
   position: absolute;
-  top: -9999px;
-  left: 10px;
-  z-index: 1000;
-  padding: 8px 16px;
+  top: -1000px;
+  left: 0;
   background: var(--accent);
   color: var(--accent-ink);
+  padding: 8px 16px;
+  z-index: 10000;
   text-decoration: none;
-  border-radius: 8px;
-  font-weight: 700;
+  border-radius: var(--radius-sm);
 }
+
 .skip-link:focus {
-  top: 10px;
-  left: 10px;
+  top: var(--sat-top);
+  left: var(--sat-left);
 }
 
 .sr-only {
@@ -1563,7 +1566,7 @@ button {
 
 .install-banner-update {
   background: var(--warn);
-  color: var(--warn-soft);
+  color: #fff;
 }
 
 .install-banner-body {
