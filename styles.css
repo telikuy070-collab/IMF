@@ -5,8 +5,8 @@
   --bg: #f6f6f8;
   --bg-elev: #ffffff;
   --ink: #17171c;
-  --ink-2: #5f5f6a;
-  --ink-3: #6b6b76;
+  --ink-2: #4a4a58;
+  --ink-3: #5c5c6b;
   --line: #e7e7ec;
   --line-2: #d8d8e0;
   --accent: #4f46e5;
@@ -25,6 +25,9 @@
   --exam: #e11d48;
   --radius: 18px;
   --radius-sm: 12px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
   --font:
     -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI Variable', Inter, Roboto,
     'Helvetica Neue', Arial, sans-serif;
@@ -82,6 +85,9 @@
     --lab: #34d399;
     --other: #fbbf24;
     --exam: #fb7185;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -108,6 +114,9 @@ html.theme-dark {
   --lab: #34d399;
   --other: #fbbf24;
   --exam: #fb7185;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 html.theme-light {
@@ -115,8 +124,8 @@ html.theme-light {
   --bg: #f6f6f8;
   --bg-elev: #ffffff;
   --ink: #17171c;
-  --ink-2: #5f5f6a;
-  --ink-3: #6b6b76;
+  --ink-2: #4a4a58;
+  --ink-3: #5c5c6b;
   --line: #e7e7ec;
   --line-2: #d8d8e0;
   --accent: #4f46e5;
@@ -283,7 +292,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 36px;
+  min-height: 44px;
   padding: 6px 12px;
   border: 1px solid var(--line-2);
   border-radius: 999px;
@@ -937,8 +946,8 @@ button {
 }
 
 .lesson-card-bell .bell {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 4px;
   margin: 0;
   border: 0;
@@ -2031,7 +2040,7 @@ html.theme-dark .skeleton {
 .qr-image {
   width: 200px;
   height: 200px;
-  background: #fff;
+  background: var(--bg-elev);
   border-radius: 16px;
   padding: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
