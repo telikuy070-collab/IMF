@@ -51,7 +51,7 @@ import { toAppError } from '@core/domain/errors';
 import { logger } from '@shared/logger';
 import { getBuildDiagnostics } from '@shared/diagnostics';
 import { initTheme, applyTheme, isDark } from './ui/theme/themeStore';
-import type { ScheduleData } from '@core/domain/entities/types';
+import type { DayName, ScheduleData } from '@core/domain/entities/types';
 import type { Lesson } from '@core/domain/entities/types';
 import { createContainer } from './container.ts';
 import { formatStamp, offlineNoticeText, lessonWord } from './format.ts';
@@ -118,7 +118,19 @@ export async function bootstrap(): Promise<void> {
   function applyInitialDay(): void {
     if (currentFilters.value.day) return;
     if (!preferences.value.currentGroup) return;
-    actions.setFilter('day', todayName.value);
+    if (!schedule.value?.sheets?.size) return;
+
+    const allLessons = Array.from(schedule.value.sheets.values()).flat();
+    const lessons = allLessons.filter(l => l.group === preferences.value.currentGroup);
+    const daysWithLessons = [...new Set(lessons.map(l => l.day))];
+
+    if (daysWithLessons.length === 0) return;
+
+      if (daysWithLessons.includes(todayName.value)) {
+        actions.setFilter('day', todayName.value as DayName);
+      } else {
+        actions.setFilter('day', daysWithLessons[0]);
+      }
   }
 
   /**
@@ -1055,7 +1067,7 @@ export async function bootstrap(): Promise<void> {
   function applyLaunchFilters(): void {
     const params = new URLSearchParams(window.location.search);
     if (params.get('day') !== 'today') return;
-    actions.setFilter('day', todayName.value);
+    actions.setFilter('day', todayName.value as DayName)
   }
 
   async function handlePullRefresh(scheduleService: ScheduleService): Promise<void> {
